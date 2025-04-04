@@ -12,9 +12,9 @@ The Gold-Base-Index (GBI) represents a stock's value relative to gold, normalize
 ```
 
 Where:
-- $\text{\$STOCK}$ is the stock price in USD
-- $\text{\$GLD}$ is the gold price in USD
-- $\text{GBP}_{\text{base}}(\text{STOCK})$ is the value of $GBP$ on a selected base date (default: 2023-01-01)
+- $`\text{\$STOCK}`$ is the stock price in USD
+- $`\text{\$GLD}`$ is the gold price in USD
+- $`\text{GBP}_{\text{base}}(\text{STOCK})`$ is the value of $GBP$ on a selected base date (default: 2023-01-01)
 
 ## Why GBI?
 
