@@ -37,7 +37,6 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -u
           git commit -m "Update all_gbi_data.csv [Automated]"
-          git push origin HEAD
 
       # Step 6: Create a pull request
       - name: Create Pull Request
