@@ -4,12 +4,12 @@
 
 The Gold-Base-Index (GBI) represents a stock's value relative to gold, normalized to a base date. It is calculated as:
 
-$$
+```math
 \begin{align}
 \text{GBP}(\text{STOCK}) &= \frac{\text{\$STOCK}}{\text{\$GLD}} \\
 \text{GBI}(\text{STOCK}) &= \frac{\text{GBP(STOCK)}}{\text{GBP}_{\text{base}}(\text{STOCK})}
 \end{align}
-$$
+```
 
 Where:
 - $\text{\$STOCK}$ is the stock price in USD
