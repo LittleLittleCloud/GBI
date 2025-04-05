@@ -17,28 +17,39 @@ interface MarketTrendVisualizerProps {
     initialData: MarketData[];
 }
 
+export type baselineSymbolType = 'SPY' | 'QQQ' | 'GLD'; // Define baseline symbols
+export type EnhancedMarketData = MarketData & {
+    [key in `${baselineSymbolType} Price`]?: number;
+} & {
+    [key in `${baselineSymbolType} GBI`]?: number;
+};
 const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialData }) => {
     const [data, setData] = useState<MarketData[]>(initialData);
     const [symbols, setSymbols] = useState<string[]>([]);
     const [selectedSymbol, setSelectedSymbol] = useState<string>('');
     const [activeTab, setActiveTab] = useState('all');
     const [isLoading, setIsLoading] = useState(true);
+    const baselineSymbols: baselineSymbolType[] = ['SPY', 'QQQ', 'GLD']; // Define baseline symbols
 
     // Colors for the different trend lines
     const colors = {
         stock: '#2563eb', // blue
         gold: '#f59e0b',  // amber
         gbi: '#10b981',   // emerald
+        spy: '#ef4444',   // red
+        qqq: '#8b5cf6',   // purple
     };
 
     useEffect(() => {
         // Process the initial data
         if (initialData && initialData.length > 0) {
-            // Extract unique symbols
-            const uniqueSymbols = Array.from(new Set(initialData.map(item => item['Stock Symbol'])));
+            // Extract unique symbols excluding baselines
+            const uniqueSymbols = Array.from(
+                new Set(initialData.map(item => item['Stock Symbol']))
+            ).filter(symbol => !baselineSymbols.includes(symbol as baselineSymbolType));
 
-            setSymbols(uniqueSymbols);
-            setSelectedSymbol(uniqueSymbols[0]);
+            setSymbols(uniqueSymbols as string[]);
+            setSelectedSymbol(uniqueSymbols[0] as string);
             setIsLoading(false);
         }
     }, [initialData]);
@@ -46,23 +57,10 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
     // Filter data by selected symbol
     const filteredData = data.filter(item => item['Stock Symbol'] === selectedSymbol);
 
-    // Normalize data for better visualization
-    const normalizedData = filteredData.map(item => {
-        const stockPrice = item['Stock Price'];
-        const goldPrice = item['Gold Price'];
-        const gbi = item.GBI;
-
-        // Calculate the initial value for each metric (based on the first day)
-        const initialStockPrice = filteredData[0]['Stock Price'];
-        const initialGoldPrice = filteredData[0]['Gold Price'];
-        const initialGBI = filteredData[0].GBI;
-
-        return {
-            ...item,
-            normalizedStockPrice: (stockPrice / initialStockPrice) * 100,
-            normalizedGoldPrice: (goldPrice / initialGoldPrice) * 100,
-            normalizedGBI: (gbi / initialGBI) * 100
-        };
+    // Get baseline data
+    const baselineData: Record<string, MarketData[]> = {};
+    baselineSymbols.forEach(symbol => {
+        baselineData[symbol] = data.filter(item => item['Stock Symbol'] === symbol);
     });
 
     // Handle symbol change
@@ -75,15 +73,59 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
         setActiveTab(value);
     };
 
+    // Function to match dates between datasets for comparison
+    const getPriceAndGBIForDate = (baselineArray: MarketData[], date: string) => {
+        const match = baselineArray.find(item => item.Date === date);
+        return match ? {
+            price: match['Stock Price'],
+            gbi: match.GBI
+        } : null;
+    };
+
+    // Enhance filtered data with baseline comparisons
+    const enhancedChartData = filteredData.map(item => {
+        const enhancedItem: EnhancedMarketData = { ...item };
+
+        // Add baseline values
+        baselineSymbols.forEach(symbol => {
+            if (baselineData[symbol] && baselineData[symbol].length) {
+                const baselineValue = getPriceAndGBIForDate(baselineData[symbol], item.Date);
+                if (baselineValue !== null) {
+                    enhancedItem[`${symbol} Price`] = baselineValue.price;
+                    enhancedItem[`${symbol} GBI`] = baselineValue.gbi;
+                }
+            }
+        });
+
+        return enhancedItem;
+    });
+
     return (
         <div className="container mx-auto p-4">
             <Card className="w-full">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="text-2xl">Market Trend Visualization</CardTitle>
+                            <CardTitle className="text-2xl">GBI Visualizer</CardTitle>
                             <CardDescription>
-                                Compare stock prices, gold prices, and GBI index over time
+                                <a href="https://github.com/LittleLittleCloud/GBI"
+                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+                                    [View GBI on GitHub]
+                                </a>{" "}
+                                <a href="https://github.com/LittleLittleCloud/GBI/issues"
+                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+                                    [Create an Issue]
+                                </a>{" "}
+                                <a href="https://github.com/LittleLittleCloud/GBI/issues"
+                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+                                    [Give US A Star]
+                                </a>
                             </CardDescription>
                         </div>
                         <Select value={selectedSymbol} onValueChange={handleSymbolChange}>
@@ -109,16 +151,16 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                         <div>
                             <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="mb-4">
                                 <TabsList>
-                                    <TabsTrigger value="all">All Metrics</TabsTrigger>
-                                    <TabsTrigger value="absolute">Absolute Values</TabsTrigger>
-                                    <TabsTrigger value="normalized">Normalized Values</TabsTrigger>
+                                    <TabsTrigger value="all">Combined Metrics</TabsTrigger>
+                                    <TabsTrigger value="absolute">Separate Metrics</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="all" className="pt-4">
                                     <div className="h-96">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart
-                                                data={filteredData}
+                                                title='Pirce and GBI'
+                                                data={enhancedChartData}
                                                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" />
@@ -135,7 +177,10 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                                 <Tooltip
                                                     formatter={(value, name) => [
                                                         Number(value).toFixed(2),
-                                                        name === "Stock Price" ? "Stock" : name === "Gold Price" ? "Gold" : "GBI"
+                                                        name === "Stock" ? selectedSymbol :
+                                                            name === "Gold Price" ? "Gold" :
+                                                                name === "GBI" ? `${selectedSymbol} GBI` :
+                                                                    name
                                                     ]}
                                                     labelFormatter={(label) => new Date(label).toLocaleDateString()}
                                                 />
@@ -145,16 +190,7 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                                     type="monotone"
                                                     dataKey="Stock Price"
                                                     stroke={colors.stock}
-                                                    name="Stock"
-                                                    dot={false}
-                                                    activeDot={{ r: 6 }}
-                                                />
-                                                <Line
-                                                    yAxisId="left"
-                                                    type="monotone"
-                                                    dataKey="Gold Price"
-                                                    stroke={colors.gold}
-                                                    name="Gold"
+                                                    name={selectedSymbol}
                                                     dot={false}
                                                     activeDot={{ r: 6 }}
                                                 />
@@ -163,10 +199,39 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                                     type="monotone"
                                                     dataKey="GBI"
                                                     stroke={colors.gbi}
-                                                    name="GBI"
+                                                    name={`${selectedSymbol} GBI`}
                                                     dot={false}
                                                     activeDot={{ r: 6 }}
                                                 />
+                                                {/* Add baseline Price lines */}
+                                                {baselineSymbols.map(symbol => (
+                                                    <Line
+                                                        key={symbol}
+                                                        yAxisId="left"
+                                                        type="monotone"
+                                                        dataKey={`${symbol} Price`}
+                                                        stroke={colors[symbol.toLowerCase() as keyof typeof colors]}
+                                                        name={symbol}
+                                                        dot={false}
+                                                        strokeDasharray="5 5"
+                                                        activeDot={{ r: 4 }}
+                                                    />
+                                                ))}
+
+                                                {/* Add baseline GBI lines */}
+                                                {baselineSymbols.map(symbol => (
+                                                    <Line
+                                                        key={`${symbol} GBI`}
+                                                        yAxisId="right"
+                                                        type="monotone"
+                                                        dataKey={`${symbol} GBI`}
+                                                        stroke={colors[symbol.toLowerCase() as keyof typeof colors]}
+                                                        name={`${symbol} GBI`}
+                                                        dot={false}
+                                                        strokeDasharray="5 5"
+                                                        activeDot={{ r: 4 }}
+                                                    />
+                                                ))}
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -176,7 +241,7 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                     <div className="h-96">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart
-                                                data={filteredData}
+                                                data={enhancedChartData}
                                                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" />
@@ -192,7 +257,8 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                                 <Tooltip
                                                     formatter={(value, name) => [
                                                         Number(value).toFixed(2),
-                                                        name === "Stock Price" ? "Stock" : name === "Gold Price" ? "Gold" : "GBI"
+                                                        name === "Stock" ? selectedSymbol :
+                                                            name
                                                     ]}
                                                     labelFormatter={(label) => new Date(label).toLocaleDateString()}
                                                 />
@@ -201,86 +267,30 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                                     type="monotone"
                                                     dataKey="Stock Price"
                                                     stroke={colors.stock}
-                                                    name="Stock"
+                                                    name={selectedSymbol}
                                                     dot={false}
                                                     activeDot={{ r: 6 }}
                                                 />
+                                                {/* Add baseline lines */}
+                                                {baselineSymbols.map(symbol => (
+                                                    <Line
+                                                        key={symbol}
+                                                        type="monotone"
+                                                        dataKey={`${symbol} Price`}
+                                                        stroke={colors[symbol.toLowerCase() as keyof typeof colors]}
+                                                        name={symbol}
+                                                        dot={false}
+                                                        strokeDasharray="5 5"
+                                                        activeDot={{ r: 4 }}
+                                                    />
+                                                ))}
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                        <div className="h-64">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart
-                                                    data={filteredData}
-                                                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                                                >
-                                                    <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis
-                                                        dataKey="Date"
-                                                        tick={{ fontSize: 12 }}
-                                                        tickFormatter={(value) => {
-                                                            const date = new Date(value);
-                                                            return `${date.getMonth() + 1}/${date.getDate()}`;
-                                                        }}
-                                                    />
-                                                    <YAxis tick={{ fontSize: 12 }} />
-                                                    <Tooltip
-                                                        formatter={(value) => [Number(value).toFixed(2), "Gold"]}
-                                                        labelFormatter={(label) => new Date(label).toLocaleDateString()}
-                                                    />
-                                                    <Legend />
-                                                    <Line
-                                                        type="monotone"
-                                                        dataKey="Gold Price"
-                                                        stroke={colors.gold}
-                                                        name="Gold"
-                                                        dot={false}
-                                                        activeDot={{ r: 6 }}
-                                                    />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                        <div className="h-64">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart
-                                                    data={filteredData}
-                                                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                                                >
-                                                    <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis
-                                                        dataKey="Date"
-                                                        tick={{ fontSize: 12 }}
-                                                        tickFormatter={(value) => {
-                                                            const date = new Date(value);
-                                                            return `${date.getMonth() + 1}/${date.getDate()}`;
-                                                        }}
-                                                    />
-                                                    <YAxis tick={{ fontSize: 12 }} />
-                                                    <Tooltip
-                                                        formatter={(value) => [Number(value).toFixed(4), "GBI"]}
-                                                        labelFormatter={(label) => new Date(label).toLocaleDateString()}
-                                                    />
-                                                    <Legend />
-                                                    <Line
-                                                        type="monotone"
-                                                        dataKey="GBI"
-                                                        stroke={colors.gbi}
-                                                        name="GBI"
-                                                        dot={false}
-                                                        activeDot={{ r: 6 }}
-                                                    />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-
-                                <TabsContent value="normalized" className="pt-4">
                                     <div className="h-96">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart
-                                                data={normalizedData}
+                                                data={enhancedChartData}
                                                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" />
@@ -292,50 +302,37 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                                         return `${date.getMonth() + 1}/${date.getDate()}`;
                                                     }}
                                                 />
-                                                <YAxis
-                                                    tick={{ fontSize: 12 }}
-                                                    domain={['dataMin - 1', 'dataMax + 1']}
-                                                    tickFormatter={(value) => `${value.toFixed(0)}%`}
-                                                />
+                                                <YAxis tick={{ fontSize: 12 }} />
                                                 <Tooltip
                                                     formatter={(value, name) => [
-                                                        `${Number(value).toFixed(2)}%`,
-                                                        name === "normalizedStockPrice" ? "Stock" : name === "normalizedGoldPrice" ? "Gold" : "GBI"
+                                                        Number(value).toFixed(2),
+                                                        name === "Stock" ? selectedSymbol :
+                                                            name
                                                     ]}
                                                     labelFormatter={(label) => new Date(label).toLocaleDateString()}
                                                 />
-                                                <Legend
-                                                    formatter={(value) => {
-                                                        if (value === "normalizedStockPrice") return "Stock";
-                                                        if (value === "normalizedGoldPrice") return "Gold";
-                                                        if (value === "normalizedGBI") return "GBI";
-                                                        return value;
-                                                    }}
-                                                />
+                                                <Legend />
                                                 <Line
                                                     type="monotone"
-                                                    dataKey="normalizedStockPrice"
+                                                    dataKey="GBI"
                                                     stroke={colors.stock}
-                                                    name="normalizedStockPrice"
+                                                    name={`${selectedSymbol} GBI`}
                                                     dot={false}
                                                     activeDot={{ r: 6 }}
                                                 />
-                                                <Line
-                                                    type="monotone"
-                                                    dataKey="normalizedGoldPrice"
-                                                    stroke={colors.gold}
-                                                    name="normalizedGoldPrice"
-                                                    dot={false}
-                                                    activeDot={{ r: 6 }}
-                                                />
-                                                <Line
-                                                    type="monotone"
-                                                    dataKey="normalizedGBI"
-                                                    stroke={colors.gbi}
-                                                    name="normalizedGBI"
-                                                    dot={false}
-                                                    activeDot={{ r: 6 }}
-                                                />
+                                                {/* Add baseline lines */}
+                                                {baselineSymbols.map(symbol => (
+                                                    <Line
+                                                        key={symbol}
+                                                        type="monotone"
+                                                        dataKey={`${symbol} GBI`}
+                                                        stroke={colors[symbol.toLowerCase() as keyof typeof colors]}
+                                                        name={`${symbol} GBI`}
+                                                        dot={false}
+                                                        strokeDasharray="5 5"
+                                                        activeDot={{ r: 4 }}
+                                                    />
+                                                ))}
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -345,7 +342,11 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                     )}
                 </CardContent>
                 <CardFooter className="text-sm text-gray-500">
-                    <p>Data sourced from market historical data. Last updated: {filteredData.length > 0 ? new Date(filteredData[filteredData.length - 1].Date).toLocaleDateString() : 'N/A'}</p>
+                    <p>
+                        Data sourced from market historical data.
+                        Last updated: {filteredData.length > 0 ? new Date(filteredData[filteredData.length - 1].Date).toLocaleDateString() : 'N/A'}
+                        <br />
+                    </p>
                 </CardFooter>
             </Card>
         </div>
