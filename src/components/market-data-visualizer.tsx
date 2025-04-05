@@ -205,7 +205,7 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                     rel="noopener noreferrer">
                                     [Create an Issue]
                                 </a>{" "}
-                                <a href="https://github.com/LittleLittleCloud/GBI/issues"
+                                <a href="https://github.com/LittleLittleCloud/GBI"
                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                     target="_blank"
                                     rel="noopener noreferrer">
