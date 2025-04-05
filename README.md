@@ -29,6 +29,6 @@ This allows us to answer a far more relevant question: "How much have these stoc
 ## Today's GBI for the Big Seven
 
 >[!NOTE]
-> Update in daily basis.
+> Updated daily.
 
-![GBI](assets/data/gbi_plot.png)
+View the latest GBI values on our [visualization page](https://littlelittlecloud.github.io/GBI/).
