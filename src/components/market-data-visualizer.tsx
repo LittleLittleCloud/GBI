@@ -78,7 +78,7 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
     // Get baseline data with date range filter
     // key: date, value: BaselineData
     const baselineData: { [key: string]: BaselineData } = baselineSymbols.reduce((acc, symbol) => {
-        const filteredData = data.filter(item => item['Stock Symbol'] === symbol && (!dateRange || (new Date(item.Date) >= dateRange.from && new Date(item.Date) <= dateRange.to)));
+        const filteredData = data.filter(item => item['Stock Symbol'] === symbol && (!dateRange || (new Date(item.Date) >= dateRange.from! && new Date(item.Date) <= dateRange.to!)));
 
         for (const item of filteredData) {
             const date = item.Date;
@@ -134,7 +134,7 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
         const lineData: { [key: string]: LineData } = baselineData;
 
         for (const symbol of selectedSymbols) {
-            const filteredData = data.filter(item => item['Stock Symbol'] === symbol && (!dateRange || (new Date(item.Date) >= dateRange.from && new Date(item.Date) <= dateRange.to)));
+            const filteredData = data.filter(item => item['Stock Symbol'] === symbol && (!dateRange || (new Date(item.Date) >= dateRange.from! && new Date(item.Date) <= dateRange.to!)));
             const symbolData: LineData[] = filteredData.map(item => ({
                 Date: item.Date,
                 [`${symbol} Price`]: item['Stock Price'],
