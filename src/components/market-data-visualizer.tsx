@@ -193,11 +193,11 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                         <div>
                             <CardTitle className="text-2xl">GBI Visualizer</CardTitle>
                             <CardDescription>
-                                <a href="https://github.com/LittleLittleCloud/GBI"
+                                <a href="https://github.com/LittleLittleCloud/GBI?tab=readme-ov-file#what-is-gbi-gold-base-index"
                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                     target="_blank"
                                     rel="noopener noreferrer">
-                                    [View GBI on GitHub]
+                                    [What is GBI?]
                                 </a>{" "}
                                 <a href="https://github.com/LittleLittleCloud/GBI/issues"
                                     className="text-blue-600 hover:text-blue-800 hover:underline"
