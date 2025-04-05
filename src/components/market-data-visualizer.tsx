@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { DatePickerWithRange } from '@/components/data-picker';
+import { DateRange } from "react-day-picker";
 
 // TypeScript interface for our data
 export interface MarketData {
@@ -23,12 +25,14 @@ export type EnhancedMarketData = MarketData & {
 } & {
     [key in `${baselineSymbolType} GBI`]?: number;
 };
+
 const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialData }) => {
     const [data, setData] = useState<MarketData[]>(initialData);
     const [symbols, setSymbols] = useState<string[]>([]);
     const [selectedSymbol, setSelectedSymbol] = useState<string>('');
     const [activeTab, setActiveTab] = useState('all');
     const [isLoading, setIsLoading] = useState(true);
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const baselineSymbols: baselineSymbolType[] = ['SPY', 'QQQ', 'GLD']; // Define baseline symbols
 
     // Colors for the different trend lines
@@ -48,19 +52,48 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                 new Set(initialData.map(item => item['Stock Symbol']))
             ).filter(symbol => !baselineSymbols.includes(symbol as baselineSymbolType));
 
+            // Set default date range (last 3 months)
+            const dates = initialData.map(item => new Date(item.Date));
+            const latestDate = new Date(Math.max(...dates.map(d => d.getTime())));
+            const threeMonthsAgo = new Date(latestDate);
+            threeMonthsAgo.setMonth(latestDate.getMonth() - 3);
+            
+            setDateRange({
+                from: threeMonthsAgo,
+                to: latestDate
+            });
+
             setSymbols(uniqueSymbols as string[]);
             setSelectedSymbol(uniqueSymbols[0] as string);
             setIsLoading(false);
         }
     }, [initialData]);
 
-    // Filter data by selected symbol
-    const filteredData = data.filter(item => item['Stock Symbol'] === selectedSymbol);
+    // Filter data by selected symbol and date range
+    const filteredData = data.filter(item => {
+        const itemDate = new Date(item.Date);
+        const matchesSymbol = item['Stock Symbol'] === selectedSymbol;
+        const matchesDateRange = dateRange ? 
+            (!dateRange.from || itemDate >= dateRange.from) && 
+            (!dateRange.to || itemDate <= dateRange.to) : 
+            true;
+        
+        return matchesSymbol && matchesDateRange;
+    });
 
-    // Get baseline data
+    // Get baseline data with date range filter
     const baselineData: Record<string, MarketData[]> = {};
     baselineSymbols.forEach(symbol => {
-        baselineData[symbol] = data.filter(item => item['Stock Symbol'] === symbol);
+        baselineData[symbol] = data.filter(item => {
+            const itemDate = new Date(item.Date);
+            const matchesSymbol = item['Stock Symbol'] === symbol;
+            const matchesDateRange = dateRange ? 
+                (!dateRange.from || itemDate >= dateRange.from) && 
+                (!dateRange.to || itemDate <= dateRange.to) : 
+                true;
+            
+            return matchesSymbol && matchesDateRange;
+        });
     });
 
     // Handle symbol change
@@ -100,6 +133,11 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
         return enhancedItem;
     });
 
+    // Handle date range change
+    const handleDateRangeChange = (range: DateRange | undefined) => {
+        setDateRange(range);
+    };
+
     return (
         <div className="container mx-auto p-4">
             <Card className="w-full">
@@ -128,18 +166,24 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                 </a>
                             </CardDescription>
                         </div>
-                        <Select value={selectedSymbol} onValueChange={handleSymbolChange}>
-                            <SelectTrigger className="w-32">
-                                <SelectValue placeholder="Symbol" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {symbols.map(symbol => (
-                                    <SelectItem key={symbol} value={symbol}>
-                                        {symbol}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-4">
+                            <DatePickerWithRange 
+                                dateRange={dateRange} 
+                                onDateRangeChange={handleDateRangeChange} 
+                            />
+                            <Select value={selectedSymbol} onValueChange={handleSymbolChange}>
+                                <SelectTrigger className="w-32">
+                                    <SelectValue placeholder="Symbol" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {symbols.map(symbol => (
+                                        <SelectItem key={symbol} value={symbol}>
+                                            {symbol}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -346,6 +390,9 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                         Data sourced from market historical data.
                         Last updated: {filteredData.length > 0 ? new Date(filteredData[filteredData.length - 1].Date).toLocaleDateString() : 'N/A'}
                         <br />
+                        {filteredData.length > 0 && 
+                            `Showing data from ${new Date(filteredData[0].Date).toLocaleDateString()} to ${new Date(filteredData[filteredData.length - 1].Date).toLocaleDateString()}`
+                        }
                     </p>
                 </CardFooter>
             </Card>
