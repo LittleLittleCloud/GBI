@@ -189,22 +189,22 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
         <div className="container mx-auto p-4">
             <Card className="w-full">
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle className="text-2xl">GBI Visualizer</CardTitle>
-                            <CardDescription>
+                            <CardDescription className="flex flex-wrap gap-2">
                                 <a href="https://github.com/LittleLittleCloud/GBI?tab=readme-ov-file#what-is-gbi-gold-base-index"
                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                     target="_blank"
                                     rel="noopener noreferrer">
                                     [What is GBI?]
-                                </a>{" "}
+                                </a>
                                 <a href="https://github.com/LittleLittleCloud/GBI/issues"
                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                     target="_blank"
                                     rel="noopener noreferrer">
                                     [Create an Issue]
-                                </a>{" "}
+                                </a>
                                 <a href="https://github.com/LittleLittleCloud/GBI"
                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                     target="_blank"
@@ -213,17 +213,18 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                 </a>
                             </CardDescription>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-col space-y-3 w-full sm:w-auto sm:flex-row sm:items-center sm:gap-4">
                             <DatePickerWithRange
                                 dateRange={dateRange}
                                 onDateRangeChange={handleDateRangeChange}
+                                className="w-full sm:w-auto"
                             />
                             <MultiSelect
                                 values={selectedSymbols}
                                 options={symbols.map(symbol => ({ label: symbol, value: symbol }))}
                                 onValueChange={handleSymbolChange}
                                 placeholder="Select symbols"
-                                className="w-64"
+                                className="w-full sm:w-64"
                             />
                         </div>
                     </div>
@@ -236,38 +237,46 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                     ) : (
                         <div>
                             <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="mb-4">
-                                <TabsList>
+                                <TabsList className="w-full grid grid-cols-2">
                                     <TabsTrigger value="all">Combined Metrics</TabsTrigger>
                                     <TabsTrigger value="absolute">Separate Metrics</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="all" className="pt-4">
-                                    <div className="h-96">
+                                    <div className="h-[400px] sm:h-96">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart
-                                                title='Pirce and GBI'
+                                                title='Price and GBI'
                                                 data={lineData}
-                                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis
                                                     dataKey="Date"
-                                                    tick={{ fontSize: 12 }}
+                                                    tick={{ fontSize: 10 }}
                                                     tickFormatter={(value) => {
                                                         const date = new Date(value);
                                                         return `${date.getMonth() + 1}/${date.getDate()}`;
                                                     }}
+                                                    height={30}
+                                                    minTickGap={15}
                                                 />
-                                                <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 12 }} />
-                                                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                                                <Tooltip
+                                                <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 10 }} width={30} />
+                                                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} width={30} />
+                                                <Tooltip 
                                                     formatter={(value, name) => [
                                                         Number(value).toFixed(2),
-                                                        name
+                                                        name,
                                                     ]}
                                                     labelFormatter={(label) => new Date(label).toLocaleDateString()}
                                                 />
-                                                <Legend />
+                                                <Legend 
+                                                    wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                                                    layout="horizontal"
+                                                    verticalAlign="bottom"
+                                                    align="center"
+                                                    height={36}
+                                                />
                                                 {/* Add baseline Price lines */}
                                                 {baselineSymbols.map(symbol => (
                                                     <>
@@ -329,31 +338,38 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                 </TabsContent>
 
                                 <TabsContent value="absolute" className="pt-4">
-                                    <div className="h-96">
+                                    <div className="h-[400px] sm:h-96">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart
                                                 data={lineData}
-                                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis
                                                     dataKey="Date"
-                                                    tick={{ fontSize: 12 }}
+                                                    tick={{ fontSize: 10 }}
                                                     tickFormatter={(value) => {
                                                         const date = new Date(value);
                                                         return `${date.getMonth() + 1}/${date.getDate()}`;
                                                     }}
+                                                    height={30}
+                                                    minTickGap={15}
                                                 />
-                                                <YAxis tick={{ fontSize: 12 }} />
+                                                <YAxis tick={{ fontSize: 10 }} width={30} />
                                                 <Tooltip
                                                     formatter={(value, name) => [
                                                         Number(value).toFixed(2),
-                                                        name
+                                                        name,
                                                     ]}
                                                     labelFormatter={(label) => new Date(label).toLocaleDateString()}
                                                 />
-                                                <Legend />
-                                               
+                                                <Legend 
+                                                    wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                                                    layout="horizontal"
+                                                    verticalAlign="bottom"
+                                                    align="center"
+                                                    height={36}
+                                                />
                                                 {/* Add baseline lines */}
                                                 {baselineSymbols.map(symbol => (
                                                     <Line
@@ -383,30 +399,38 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="h-96">
+                                    <div className="h-[400px] sm:h-96">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart
                                                 data={lineData}
-                                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis
                                                     dataKey="Date"
-                                                    tick={{ fontSize: 12 }}
+                                                    tick={{ fontSize: 10 }}
                                                     tickFormatter={(value) => {
                                                         const date = new Date(value);
                                                         return `${date.getMonth() + 1}/${date.getDate()}`;
                                                     }}
+                                                    height={30}
+                                                    minTickGap={15}
                                                 />
-                                                <YAxis tick={{ fontSize: 12 }} />
+                                                <YAxis tick={{ fontSize: 10 }} width={30} />
                                                 <Tooltip
                                                     formatter={(value, name) => [
                                                         Number(value).toFixed(2),
-                                                            name
+                                                        name,
                                                     ]}
                                                     labelFormatter={(label) => new Date(label).toLocaleDateString()}
                                                 />
-                                                <Legend />
+                                                <Legend 
+                                                    wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                                                    layout="horizontal"
+                                                    verticalAlign="bottom"
+                                                    align="center"
+                                                    height={36}
+                                                />
                                                 {/* Add baseline lines */}
                                                 {baselineSymbols.map(symbol => (
                                                     <Line
@@ -441,15 +465,19 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                         </div>
                     )}
                 </CardContent>
-                <CardFooter className="text-sm text-gray-500">
-                    <p>
-                        Data sourced from market historical data.
-                        Last updated: {lineData.length > 0 ? new Date(lineData[lineData.length - 1].Date).toLocaleDateString() : 'N/A'}
-                        <br />
-                        {lineData.length > 0 &&
-                            `Showing data from ${new Date(lineData[0].Date).toLocaleDateString()} to ${new Date(lineData[lineData.length - 1].Date).toLocaleDateString()}`
-                        }
-                    </p>
+                <CardFooter className="text-xs sm:text-sm text-gray-500">
+                    <div className="w-full">
+                        <p>
+                            Data sourced from market historical data.
+                            <br />
+                            Last updated: {lineData.length > 0 ? new Date(lineData[lineData.length - 1].Date).toLocaleDateString() : 'N/A'}
+                        </p>
+                        <p className="mt-1">
+                            {lineData.length > 0 &&
+                                `Showing data from ${new Date(lineData[0].Date).toLocaleDateString()} to ${new Date(lineData[lineData.length - 1].Date).toLocaleDateString()}`
+                            }
+                        </p>
+                    </div>
                 </CardFooter>
             </Card>
         </div>
