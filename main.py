@@ -16,13 +16,19 @@ def calculate_gbi(stock_symbol, start_date, end_date):
         pd.DataFrame: A DataFrame containing the date, stock price, gold price, and GBI.
     """
     # Fetch stock data
-    stock_data = yf.download(stock_symbol, start=start_date, end=end_date, auto_adjust=False)
+    stock_data = yf.download(stock_symbol, start=start_date, end=end_date, auto_adjust=True)
     if stock_data.empty:
         raise ValueError(f"No data found for stock symbol: {stock_symbol}")
     # Fetch gold data (using GLD ETF as a proxy for gold price)
-    gold_data = yf.download("GLD", start=start_date, end=end_date, auto_adjust=False)
+    gold_data = yf.download("GLD", start=start_date, end=end_date, auto_adjust=True)
     if gold_data.empty:
         raise ValueError("No data found for gold (GLD).")
+    
+    # find the longest common date range
+    common_start_date = max(stock_data.index.min(), gold_data.index.min())
+    common_end_date = min(stock_data.index.max(), gold_data.index.max())
+    stock_data = stock_data[(stock_data.index >= common_start_date) & (stock_data.index <= common_end_date)]
+    gold_data = gold_data[(gold_data.index >= common_start_date) & (gold_data.index <= common_end_date)]
 
     # Merge stock and gold data on the date
     merged_data = pd.DataFrame({
@@ -42,7 +48,10 @@ def calculate_gbi(stock_symbol, start_date, end_date):
 
 # Example usage
 if __name__ == "__main__":
-    big_seven = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA"]  # Big seven stock symbols
+    # the symbols are saved under symbol.json as a list of strings
+    import json
+    with open("symbol.json", "r") as f:
+        big_seven = json.load(f)
     qqq_and_spy = ["QQQ", "SPY"]  # QQQ and SPY symbols
 
     baselines = ["GLD"] + qqq_and_spy  # Baseline symbols for comparison

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DatePickerWithRange } from '@/components/data-picker';
 import { DateRange } from "react-day-picker";
 import MultiSelect from '@/components/multi-selector';
+import { marketSymbolType } from '@/lib/symbol';
 
 // TypeScript interface for our data
 export interface MarketData {
@@ -20,7 +20,6 @@ interface MarketTrendVisualizerProps {
     initialData: MarketData[];
 }
 
-export type marketSymbolType = 'AAPL' | 'MSFT' | 'AMZN' | 'TSLA' | 'GOOGL' | 'NFLX' | 'META' | 'NVDA' | 'AMD' | 'INTC' & baselineSymbolType;
 export type baselineSymbolType = 'SPY' | 'QQQ' | 'GLD'; // Define baseline symbols
 
 export type BaselineData = {
@@ -139,7 +138,7 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                 Date: item.Date,
                 [`${symbol} Price`]: item['Stock Price'],
                 [`${symbol} GBI`]: item.GBI,
-            }));
+            } as LineData));
 
             // Add symbol data to lineData
             symbolData.forEach(item => {
