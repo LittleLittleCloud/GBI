@@ -3,10 +3,15 @@ import localFont from "next/font/local";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import MarketTrendVisualizer, { MarketData } from "@/components/market-data-visualizer";
+import MarketTrendVisualizer, {
+  MarketData,
+} from "@/components/market-data-visualizer";
 import exp from "constants";
 import { GetStaticProps } from "next";
 import { loadMarketData } from "@/lib/utils";
+import { Header } from "@/components/header";
+import { DateRangeSelector } from "@/components/date-range-selector";
+import SymbolSelectorCard from "@/components/symbol-selector";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,8 +30,7 @@ export type ProjectMetadata = {
   url?: string;
 };
 
-
-export default function Home({marketData}: {marketData: MarketData[]}) {
+export default function Home({ marketData }: { marketData: MarketData[] }) {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme, resolvedTheme, systemTheme } = useTheme();
 
@@ -51,19 +55,24 @@ export default function Home({marketData}: {marketData: MarketData[]}) {
         <meta name="description" content="github page for GBI" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <div className="flex items-center justify-center">
+        <Header />
+        <DateRangeSelector />
+        <SymbolSelectorCard />
+      </div>
       <div>
         <MarketTrendVisualizer initialData={marketData} />
       </div>
     </main>
-  )
+  );
 }
 
 export const getStaticProps: GetStaticProps = async () => {
   const marketData = loadMarketData();
-  
+
   return {
     props: {
-      marketData
+      marketData,
     },
     // Optionally revalidate the data after a certain period (in seconds)
     // revalidate: 86400, // Revalidate once per day

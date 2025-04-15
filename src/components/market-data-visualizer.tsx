@@ -6,6 +6,8 @@ import { DatePickerWithRange } from '@/components/data-picker';
 import { DateRange } from "react-day-picker";
 import MultiSelect from '@/components/multi-selector';
 import { marketSymbolType } from '@/lib/symbol';
+import { useDateStore } from '@/lib/dateStore';
+import { useSymbolStore } from '@/lib/symbolStore';
 
 // TypeScript interface for our data
 export interface MarketData {
@@ -38,11 +40,12 @@ export type LineData = {
 const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialData }) => {
     const [data, setData] = useState<MarketData[]>(initialData);
     const [symbols, setSymbols] = useState<string[]>([]);
-    const [selectedSymbols, setSelectedSymbols] = useState<marketSymbolType[]>([]);  // Changed from selectedSymbol
     const [activeTab, setActiveTab] = useState('all');
     const [isLoading, setIsLoading] = useState(true);
     const [lineData, setLineData] = useState<LineData[]>([]);
-    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const setAvailableSymbols = useSymbolStore(state => state.setAvailableSymbols); // Use Zustand store for available symbols
+    const selectedSymbols = useSymbolStore(state => state.selectedSymbols); // Use Zustand store for selected symbols
+    const dateRange = useDateStore<DateRange | undefined>(state => state.dateRange); // Use Zustand store for date range
     const baselineSymbols: baselineSymbolType[] = ['SPY', 'QQQ', 'GLD']; // Define baseline symbols
 
     // Colors for the different trend lines
@@ -78,7 +81,7 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
     // key: date, value: BaselineData
     const baselineData: { [key: string]: BaselineData } = baselineSymbols.reduce((acc, symbol) => {
         const filteredData = data.filter(item => item['Stock Symbol'] === symbol && (!dateRange || (new Date(item.Date) >= dateRange.from! && new Date(item.Date) <= dateRange.to!)));
-
+        
         for (const item of filteredData) {
             const date = item.Date;
             const priceKey = `${symbol} Price` as const;
@@ -109,22 +112,8 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
                 new Set(initialData.map(item => item['Stock Symbol']))
             ).filter(symbol => !baselineSymbols.includes(symbol as baselineSymbolType));
 
-            // Set default date range (last 3 months)
-            const dates = initialData.map(item => new Date(item.Date));
-            const latestDate = new Date(Math.max(...dates.map(d => d.getTime())));
-            const threeMonthsAgo = new Date(latestDate);
-            threeMonthsAgo.setMonth(latestDate.getMonth() - 3);
-            
-            console.log("Latest Date:", latestDate.toLocaleDateString());
-            console.log("Three Months Ago:", threeMonthsAgo.toLocaleDateString());
-            setDateRange({
-                from: threeMonthsAgo,
-                to: latestDate
-            });
-
             setSymbols(uniqueSymbols as marketSymbolType[]);
-            // Default select only the first symbol
-            setSelectedSymbols([uniqueSymbols[0] as marketSymbolType]);
+            setAvailableSymbols(uniqueSymbols as marketSymbolType[]); // Set available symbols in Zustand store
             setIsLoading(false);
         }
     }, [initialData]);
@@ -163,71 +152,17 @@ const MarketTrendVisualizer: React.FC<MarketTrendVisualizerProps> = ({ initialDa
         console.log("Combined Enhanced Chart Data:", combinedEnhancedChartData);
 
         setLineData(combinedEnhancedChartData);
-    }, [selectedSymbols, data, dateRange, baselineData]);
+    }, [selectedSymbols, data, dateRange]);
 
-
-
-
-    // Handle symbol selection
-    const handleSymbolChange = (value: string[]) => {
-        setSelectedSymbols(value as marketSymbolType[]);
-    };
 
     // Handle tab change
     const handleTabChange = (value: string) => {
         setActiveTab(value);
     };
 
-
-    // Handle date range change
-    const handleDateRangeChange = (range: DateRange | undefined) => {
-        setDateRange(range);
-    };
-
     return (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto m-4">
             <Card className="w-full">
-                <CardHeader>
-                    <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <CardTitle className="text-2xl">GBI Visualizer</CardTitle>
-                            <CardDescription className="flex flex-wrap gap-2">
-                                <a href="https://github.com/LittleLittleCloud/GBI?tab=readme-ov-file#what-is-gbi-gold-base-index"
-                                    className="text-blue-600 hover:text-blue-800 hover:underline"
-                                    target="_blank"
-                                    rel="noopener noreferrer">
-                                    [What is GBI?]
-                                </a>
-                                <a href="https://github.com/LittleLittleCloud/GBI/issues"
-                                    className="text-blue-600 hover:text-blue-800 hover:underline"
-                                    target="_blank"
-                                    rel="noopener noreferrer">
-                                    [Create an Issue]
-                                </a>
-                                <a href="https://github.com/LittleLittleCloud/GBI"
-                                    className="text-blue-600 hover:text-blue-800 hover:underline"
-                                    target="_blank"
-                                    rel="noopener noreferrer">
-                                    [Give US A Star]
-                                </a>
-                            </CardDescription>
-                        </div>
-                        <div className="flex flex-col space-y-3 w-full sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-                            <DatePickerWithRange
-                                dateRange={dateRange}
-                                onDateRangeChange={handleDateRangeChange}
-                                className="w-full sm:w-auto"
-                            />
-                            <MultiSelect
-                                values={selectedSymbols}
-                                options={symbols.map(symbol => ({ label: symbol, value: symbol }))}
-                                onValueChange={handleSymbolChange}
-                                placeholder="Select symbols"
-                                className="w-full sm:w-64"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
                 <CardContent>
                     {isLoading ? (
                         <div className="flex justify-center items-center h-64">
