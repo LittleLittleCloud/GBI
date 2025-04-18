@@ -1,9 +1,9 @@
-import { MarketData } from "@/components/market-data-visualizer";
 import { clsx, type ClassValue } from "clsx"
 import Papa from "papaparse";
 import path from "path";
 import { twMerge } from "tailwind-merge"
 import fs from 'fs';
+import { MarketData } from "./lineDataStore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

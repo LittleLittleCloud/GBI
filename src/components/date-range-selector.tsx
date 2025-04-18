@@ -123,7 +123,7 @@ export function DateRangeSelector({
           <Tabs
             defaultValue="slider"
             value={activeTab}
-            onValueChange={(value) => setActiveTab(value as any)}
+            onValueChange={(value) => setActiveTab(value as `slider` | `calendar` | `predefined`)}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-3">
