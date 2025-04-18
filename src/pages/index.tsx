@@ -3,9 +3,6 @@ import localFont from "next/font/local";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import MarketTrendVisualizer, {
-  MarketData,
-} from "@/components/market-data-visualizer";
 import exp from "constants";
 import { GetStaticProps } from "next";
 import { loadMarketData } from "@/lib/utils";
@@ -16,6 +13,7 @@ import {
   BaselineData,
   baselineSymbolType,
   LineData,
+  MarketData,
   useLineDataStore,
 } from "@/lib/lineDataStore";
 import GBIVisualizer from "@/components/gbi-visualizer";
