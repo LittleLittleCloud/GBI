@@ -4,11 +4,11 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 export const Header: React.FC<{}> = ({
 }) => {
   return (
-    <Card className="w-1/4 mb-4 m-4">
+    <Card className='w-full'>
       <CardHeader>
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-2xl">GBI Visualizer</CardTitle>
+            <CardTitle className="text-2xl">GBI Dashboard</CardTitle>
             <CardDescription className="flex flex-wrap gap-2">
               <a
                 href="https://github.com/LittleLittleCloud/GBI?tab=readme-ov-file#what-is-gbi-gold-base-index"

@@ -9,10 +9,10 @@ interface SymbolSelectorCardProps {
   className?: string;
 }
 
-const SymbolSelectorCard: React.FC<SymbolSelectorCardProps> = ({ className }) => {
-  const selectedSymbols = useSymbolStore((state) => state.selectedSymbols);
-  const setSelectedSymbols = useSymbolStore((state) => state.setSelectedSymbols);
-  const availableSymbols = useSymbolStore((state) => state.availableSymbols);
+const BaselineSymbolSelectorCard: React.FC<SymbolSelectorCardProps> = ({ className }) => {
+  const baselineSymbols = useSymbolStore((state) => state.baselineSymbols);
+  const selectedSymbols = useSymbolStore((state) => state.selectedBaselineSymbols);
+    const setSelectedSymbols = useSymbolStore((state) => state.setSelectedBaselineSymbols);
 
   const handleSymbolChange = (value: string[]) => {
     setSelectedSymbols(value as marketSymbolType[]);
@@ -21,13 +21,13 @@ const SymbolSelectorCard: React.FC<SymbolSelectorCardProps> = ({ className }) =>
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader>
-        <CardTitle className="text-lg">Symbol Selection</CardTitle>
-        <CardDescription>Select stocks to visualize</CardDescription>
+        <CardTitle className="text-lg">Baseline Symbol Selection</CardTitle>
+        <CardDescription>Select baseline stocks to visualize</CardDescription>
       </CardHeader>
       <CardContent>
         <MultiSelect
           values={selectedSymbols}
-          options={availableSymbols.map(symbol => ({ label: symbol, value: symbol }))}
+          options={baselineSymbols.map(symbol => ({ label: symbol, value: symbol }))}
           onValueChange={handleSymbolChange}
           placeholder="Select symbols"
           className="w-full"
@@ -37,4 +37,4 @@ const SymbolSelectorCard: React.FC<SymbolSelectorCardProps> = ({ className }) =>
   );
 };
 
-export default SymbolSelectorCard;
+export default BaselineSymbolSelectorCard;

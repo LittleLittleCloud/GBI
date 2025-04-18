@@ -20,8 +20,16 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { RangeLabel, useDateStore } from "@/lib/dateStore";
+import { useLineDataStore } from "@/lib/lineDataStore";
 
 interface DateRangeSelectorProps {
   className?: string;
@@ -40,7 +48,7 @@ export function DateRangeSelector({
   const [activeRangeLabel, setActiveRangeLabel] =
     React.useState<RangeLabel>("YTD");
   const [sliderValue, setSliderValue] = React.useState<number>(30); // Default to 30 days
-
+  const lineData = useLineDataStore((state) => state.lineData); // Use Zustand store for line data
   React.useEffect(() => {
     // Set the initial date range based on the active range label
     const initialRange = predefinedRanges[activeRangeLabel]?.range();
@@ -99,16 +107,11 @@ export function DateRangeSelector({
   ) as RangeLabel[];
 
   return (
-    <Card className={cn("shadow-md w-1/4 m-4 ", className)}>
+    <Card className={cn("w-full", className)}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            {title}
-          </div>
-        </CardTitle>
+        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardDescription>Select date range</CardDescription>
       </CardHeader>
-
       <CardContent>
         <div className="space-y-4">
           {/* Current date range display - TOP */}
@@ -211,6 +214,18 @@ export function DateRangeSelector({
           </Tabs>
         </div>
       </CardContent>
+      <CardFooter className="text-xs sm:text-sm text-gray-500">
+        <div className="w-full">
+          <p>
+            Last updated:{" "}
+            {lineData.length > 0
+              ? new Date(
+                  lineData[lineData.length - 1].Date
+                ).toLocaleDateString()
+              : "N/A"}
+          </p>
+        </div>
+      </CardFooter>
     </Card>
   );
 }
