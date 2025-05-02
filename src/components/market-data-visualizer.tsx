@@ -33,7 +33,7 @@ import {
 } from "@/lib/lineDataStore";
 
 const MarketTrendVisualizer: React.FC<{}> = ({}) => {
-  const data: MarketData[] = useLineDataStore((state) => state.marketData); // Use Zustand store for market data
+  const data: LineData[] = useLineDataStore((state) => state.marketData); // Use Zustand store for market data
   const [isLoading, setIsLoading] = useState(true);
   const lineData = useLineDataStore((state) => state.lineData); // Use Zustand store for line data
   const setLineData = useLineDataStore((state) => state.setLineData); // Use Zustand store for line data

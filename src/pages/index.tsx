@@ -40,97 +40,38 @@ export type ProjectMetadata = {
   url?: string;
 };
 
-export default function Home({ marketData }: { marketData: MarketData[] }) {
+export default function Home({ marketData, symbols }: { marketData: LineData[], symbols: string[] }) {
   const [mounted, setMounted] = useState(false);
-  const data: MarketData[] = useLineDataStore((state) => state.marketData); // Use Zustand store for market data
+  const data: LineData[] = useLineDataStore((state) => state.marketData); // Use Zustand store for market data
   const { theme, setTheme, resolvedTheme, systemTheme } = useTheme();
   const setMarketData = useLineDataStore((state) => state.setMarketData);
   const setLineData = useLineDataStore((state) => state.setLineData); // Use Zustand store for line data
-  const selectedSymbols = useSymbolStore((state) => state.selectedSymbols); // Use Zustand store for selected symbols
   const dateRange = useDateStore<DateRange | undefined>(
     (state) => state.dateRange
   ); // Use Zustand store for date range
-  const baselineSymbols = useSymbolStore((state) => state.baselineSymbols); // Define baseline symbols
+
+  const setSymbols = useSymbolStore((state) => state.setAvailableSymbols);
+  const baselineSymbols = useSymbolStore(state => state.baselineSymbols);
 
   useEffect(() => {
-    const lineData: { [key: string]: LineData } = baselineSymbols.reduce(
-      (acc, symbol) => {
-        const filteredData = data.filter(
-          (item) =>
-            item["Stock Symbol"] === symbol &&
-            (!dateRange ||
-              (new Date(item.Date) >= dateRange.from! &&
-                new Date(item.Date) <= dateRange.to!))
-        );
-  
-        for (const item of filteredData) {
-          const date = item.Date;
-          const priceKey = `${symbol} Price` as const;
-          const gbiKey = `${symbol} GBI` as const;
-          const priceValue = item["Stock Price"];
-          const gbiValue = item.GBI;
-  
-          if (!acc[date]) {
-            acc[date] = {} as LineData;
-          }
-          acc[date][priceKey] = priceValue;
-          acc[date][gbiKey] = gbiValue;
-          acc[date].Date = date; // Ensure Date is set
-        }
-  
-        return acc;
-      },
-      {} as { [key: string]: LineData }
+    const filteredData = data.filter(
+      (item) =>
+        (!dateRange ||
+          (new Date(item.Date) >= dateRange.from! &&
+            new Date(item.Date) <= dateRange.to!))
     );
 
-    for (const symbol of selectedSymbols) {
-      const filteredData = data.filter(
-        (item) =>
-          item["Stock Symbol"] === symbol &&
-          (!dateRange ||
-            (new Date(item.Date) >= dateRange.from! &&
-              new Date(item.Date) <= dateRange.to!))
-      );
-      const symbolData: LineData[] = filteredData.map(
-        (item) =>
-          ({
-            Date: item.Date,
-            [`${symbol} Price`]: item["Stock Price"],
-            [`${symbol} GBI`]: item.GBI,
-          } as LineData)
-      );
-
-      // Add symbol data to lineData
-      symbolData.forEach((item) => {
-        if (!lineData[item.Date]) {
-          lineData[item.Date] = { Date: item.Date };
-        }
-        lineData[item.Date][`${symbol} Price`] = item[`${symbol} Price`];
-        lineData[item.Date][`${symbol} GBI`] = item[`${symbol} GBI`];
-      });
-    }
-
-    // Convert lineData object to array and sort by date
-    const lineDataArray = Object.values(lineData).sort(
-      (a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime()
-    );
-    const combinedEnhancedChartData = lineDataArray.map((item) => {
-      const date = new Date(item.Date).toLocaleDateString();
-      return {
-        ...item,
-        Date: date,
-      };
-    });
-
-    console.log("Combined Enhanced Chart Data:", combinedEnhancedChartData);
-
-    setLineData(combinedEnhancedChartData);
-  }, [selectedSymbols, data, dateRange]);
+    setLineData(filteredData);
+  }, [data, dateRange]);
 
   useEffect(() => {
     setMounted(true);
     console.log("Home component mounted");
     setMarketData(marketData);
+    const symbolsWithoutBaseSymblols = symbols.filter(
+      (symbol) => !baselineSymbols.includes(symbol as baselineSymbolType)
+    );
+    setSymbols(symbolsWithoutBaseSymblols);
   }, []);
 
   useEffect(() => {
@@ -170,7 +111,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const marketData = loadMarketData();
   return {
     props: {
-      marketData,
+      ...marketData,
     },
     // Optionally revalidate the data after a certain period (in seconds)
     // revalidate: 86400, // Revalidate once per day
