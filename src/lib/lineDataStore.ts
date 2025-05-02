@@ -20,8 +20,8 @@ export const useIsLoadingStore = create<IsLoadingState>((set) => ({
 }));
 
 interface LineDataState {
-  marketData: MarketData[];
-  setMarketData: (data: MarketData[]) => void;
+  marketData: LineData[];
+  setMarketData: (data: LineData[]) => void;
   clearMarketData: () => void;
   lineData: LineData[];
   setLineData: (data: LineData[]) => void;
@@ -34,10 +34,10 @@ export const useLineDataStore = create<LineDataState>((set) => ({
   setMarketData: (data) => {
     useIsLoadingStore.getState().setIsLoading(true);
     set({ marketData: data });
-    // set symbols
-    const symbols = data.map((item) => item["Stock Symbol"]);
-    const uniqueSymbols = Array.from(new Set(symbols));
-    useSymbolStore.getState().setAvailableSymbols(uniqueSymbols as marketSymbolType[]);
+    // // set symbols
+    // const symbols = data.map((item) => item["Stock Symbol"]);
+    // const uniqueSymbols = Array.from(new Set(symbols));
+    // useSymbolStore.getState().setAvailableSymbols(uniqueSymbols as marketSymbolType[]);
     useIsLoadingStore.getState().setIsLoading(false);
   },
   clearMarketData: () => set({ marketData: [] }),
