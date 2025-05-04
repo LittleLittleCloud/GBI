@@ -109,7 +109,7 @@ if __name__ == "__main__":
                 all_gbi_data = pd.concat([all_gbi_data, gbi_data], ignore_index=True)
                 continue
             # if the earliest data is before the start date, we can skip it
-            if earliest_date and earliest_date < pd.Timestamp(start_date):
+            if earliest_date and earliest_date <= pd.Timestamp(start_date):
                 print(f"Skipping {stock_symbol} as data is already available from {earliest_date}.")
                 continue
             else:
@@ -128,6 +128,9 @@ if __name__ == "__main__":
                 continue
         except ValueError as e:
             print(f"Error for {stock_symbol}: {e}")
+
+    # drop duplicates and reset index
+    all_gbi_data = all_gbi_data.drop_duplicates(subset=["Date", "Stock Symbol"])
 
     # Save the combined GBI data to a single CSV file
     combined_csv_path = os.path.join(data_folder, "all_gbi_data.csv")
