@@ -1,17 +1,29 @@
 import { create } from "zustand";
 import { DateRange } from "react-day-picker";
+import { useLineDataStore } from "./lineDataStore";
 
-export type RangeLabel = 'Last 3 Months' | 'Last 6 Months' | 'YTD' | 'MTD' | 'Last Year' | 'Last 30 Days' | 'Last 7 Days';
+export type RangeLabel =
+  | "Last 7 Days"
+  | "Last 30 Days"
+  | "Last 3 Months"
+  | "Last 6 Months"
+  | "Last Year"
+  | "MTD"
+  | "YTD"
+  | "Full History";
 
 export interface DateState {
   // Current date range selection
   dateRange: DateRange | undefined;
 
   // Predefined ranges for quick selection
-  predefinedRanges: Record<RangeLabel, {
-    label: RangeLabel;
-    range: () => DateRange;
-  }>;
+  predefinedRanges: Record<
+    RangeLabel,
+    {
+      label: RangeLabel;
+      range: () => DateRange;
+    }
+  >;
 
   // Actions
   setDateRange: (range: DateRange | undefined) => void;
@@ -46,7 +58,7 @@ export const useDateStore = create<DateState>((set, get) => ({
         return { from: sixMonthsAgo, to: today };
       },
     },
-    "YTD": {
+    YTD: {
       label: "YTD",
       range: () => {
         const today = new Date();
@@ -54,7 +66,7 @@ export const useDateStore = create<DateState>((set, get) => ({
         return { from: startOfYear, to: today };
       },
     },
-    "MTD": {
+    MTD: {
       label: "MTD",
       range: () => {
         const today = new Date();
@@ -87,6 +99,15 @@ export const useDateStore = create<DateState>((set, get) => ({
         const last7Days = new Date(today);
         last7Days.setDate(today.getDate() - 7);
         return { from: last7Days, to: today };
+      },
+    },
+    "Full History": {
+      label: "Full History",
+      range: () => {
+        const marketData = useLineDataStore.getState().marketData; // Assuming you have a way to get all market data
+        const firstDate = new Date(marketData[0].Date);
+        const lastDate = new Date(marketData[marketData.length - 1].Date);
+        return { from: firstDate, to: lastDate };
       },
     },
   },

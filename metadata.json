@@ -1,0 +1,22 @@
+{
+    "symbols": [
+        "MSFT",
+        "AAPL",
+        "GOOGL",
+        "AMZN",
+        "TSLA",
+        "META",
+        "NFLX",
+        "NVDA",
+        "AMD",
+        "INTC",
+        "CSCO",
+        "ORCL",
+        "IBM",
+        "BABA",
+        "MCHI",
+        "ASHR"
+    ],
+    "start_date": "2021-01-03",
+    "interval": "1d"
+}

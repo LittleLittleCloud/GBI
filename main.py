@@ -1,7 +1,33 @@
+from typing import Optional
 from matplotlib import pyplot as plt
+from typing_extensions import Literal, TypedDict
 import yfinance as yf
 import pandas as pd
 import os  # Add this import for handling file paths
+
+class RetrieveDataMetadata(TypedDict):
+    """
+    Metadata for retrieving data from Yahoo Finance.
+    """
+    symbols: list[str]
+    start_date: str
+    end_date: Optional[str] = None
+    interval: Literal["1d", "1wk", "1mo", "1h", "5m", "15m", "30m", "60m", "90m", "1d"]
+
+def load_existing_data(file_path: str) -> pd.DataFrame:
+    """
+    Load existing data from a CSV file.
+
+    Parameters:
+        file_path (str): Path to the CSV file.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the loaded data.
+    """
+    if os.path.exists(file_path):
+        return pd.read_csv(file_path, parse_dates=["Date"])
+    else:
+        return pd.DataFrame(columns=["Date", "Stock Price", "Gold Price", "GBI", "Stock Symbol"])
 
 def calculate_gbi(stock_symbol, start_date, end_date):
     """
@@ -50,60 +76,63 @@ def calculate_gbi(stock_symbol, start_date, end_date):
 if __name__ == "__main__":
     # the symbols are saved under symbol.json as a list of strings
     import json
-    with open("symbol.json", "r") as f:
-        big_seven = json.load(f)
+    with open("metadata.json", "r") as f:
+        metadata: RetrieveDataMetadata = json.load(f)
     qqq_and_spy = ["QQQ", "SPY"]  # QQQ and SPY symbols
 
     baselines = ["GLD"] + qqq_and_spy  # Baseline symbols for comparison
-    start_date = "2023-01-01"  # Replace with your desired start date
+    start_date = metadata["start_date"]  # Replace with your desired start date
     today = pd.Timestamp.today().normalize()
     end_date = today  # Replace with your desired end date
 
-    plt.figure(figsize=(12, 8))  # Set the figure size
-
     # Add GLD to the list of symbols for baseline comparison
-    big_seven_with_gld = big_seven + ["GLD"] + qqq_and_spy
+    big_seven_with_gld = metadata["symbols"] + ["GLD"] + qqq_and_spy
 
     # Create the /data folder if it doesn't exist
     data_folder = os.path.join(os.getcwd(), "assets", "data")
     os.makedirs(data_folder, exist_ok=True)
 
     # Initialize an empty DataFrame to store all GBI data
-    all_gbi_data = pd.DataFrame()
+    all_gbi_data = load_existing_data(os.path.join(data_folder, "all_gbi_data.csv"))
 
     for stock_symbol in big_seven_with_gld:
         try:
-            print(f"Calculating GBI for {stock_symbol}...")
-            gbi_data = calculate_gbi(stock_symbol, start_date, end_date)
-
-            # Add a column for the stock symbol
-            gbi_data["Stock Symbol"] = stock_symbol
-
-            # Append the data to the combined DataFrame
-            all_gbi_data = pd.concat([all_gbi_data, gbi_data], ignore_index=True)
-
-            # Plot the GBI data
-            if stock_symbol in baselines:
-                plt.plot(gbi_data["Date"], gbi_data["GBI"], label=f"{stock_symbol} (Baseline)", linewidth=2.5)
+            print(f"Retrieving data for {stock_symbol}...")
+            existing_symbol_data = all_gbi_data[all_gbi_data["Stock Symbol"] == stock_symbol]
+            earliest_date = existing_symbol_data["Date"].min() if not existing_symbol_data.empty else None
+            latest_date = existing_symbol_data["Date"].max() if not existing_symbol_data.empty else None
+            if earliest_date is None and latest_date is None:
+                # retrieve the data from start_date to end_date
+                print(f"retrieve {stock_symbol} data from {start_date} to {end_date}.")
+                gbi_data = calculate_gbi(stock_symbol, start_date, end_date)
+                gbi_data["Stock Symbol"] = stock_symbol
+                all_gbi_data = pd.concat([all_gbi_data, gbi_data], ignore_index=True)
+                continue
+            # if the earliest data is before the start date, we can skip it
+            if earliest_date and earliest_date <= pd.Timestamp(start_date):
+                print(f"Skipping {stock_symbol} as data is already available from {earliest_date}.")
+                continue
             else:
-                plt.plot(gbi_data["Date"], gbi_data["GBI"], label=stock_symbol)
+                print(f"retrieve {stock_symbol} data from {start_date} to {earliest_date}.")
+                gbi_data = calculate_gbi(stock_symbol, start_date, earliest_date)
+                gbi_data["Stock Symbol"] = stock_symbol
+                all_gbi_data = pd.concat([all_gbi_data, gbi_data], ignore_index=True)
+            
+            if latest_date and latest_date < pd.Timestamp(end_date):
+                print(f"retrieve {stock_symbol} data from {latest_date} to {end_date}.")
+                gbi_data = calculate_gbi(stock_symbol, latest_date, end_date)
+                gbi_data["Stock Symbol"] = stock_symbol
+                all_gbi_data = pd.concat([all_gbi_data, gbi_data], ignore_index=True)
+            else:
+                print(f"Skipping {stock_symbol} as data is already available until {latest_date}.")
+                continue
         except ValueError as e:
             print(f"Error for {stock_symbol}: {e}")
+
+    # drop duplicates and reset index
+    all_gbi_data = all_gbi_data.drop_duplicates(subset=["Date", "Stock Symbol"])
 
     # Save the combined GBI data to a single CSV file
     combined_csv_path = os.path.join(data_folder, "all_gbi_data.csv")
     all_gbi_data.to_csv(combined_csv_path, index=False)
     print(f"Saved all GBI data to {combined_csv_path}")
-
-    # Customize the plot
-    plt.title("Gold-Based Index (GBI) for Big Seven Stocks", fontsize=16)
-    plt.xlabel("Date", fontsize=14)
-    plt.ylabel("Normalized GBI", fontsize=14)
-    plt.legend(title="Stock Symbol", fontsize=12)
-    plt.grid(True)
-    plt.tight_layout()
-
-    # Save the plot to a file
-    plot_path = os.path.join(data_folder, "gbi_plot.png")
-    plt.savefig(plot_path, dpi=300)
-    print(f"Plot saved to {plot_path}")

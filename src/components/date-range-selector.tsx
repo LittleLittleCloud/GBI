@@ -49,6 +49,7 @@ export function DateRangeSelector({
     React.useState<RangeLabel>("YTD");
   const [sliderValue, setSliderValue] = React.useState<number>(30); // Default to 30 days
   const lineData = useLineDataStore((state) => state.lineData); // Use Zustand store for line data
+  const marketData = useLineDataStore((state) => state.marketData); // Use Zustand store for market data
   React.useEffect(() => {
     // Set the initial date range based on the active range label
     const initialRange = predefinedRanges[activeRangeLabel]?.range();
@@ -83,8 +84,8 @@ export function DateRangeSelector({
       fromDate.setDate(today.getDate() - days);
 
       setDateRange({
-        from: fromDate,
-        to: today,
+        from: new Date(marketData[marketData.length - days].Date),
+        to: new Date(marketData[marketData.length - 1].Date),
       });
     },
     [setDateRange]
@@ -184,7 +185,7 @@ export function DateRangeSelector({
                   defaultValue={[sliderValue]}
                   value={[sliderValue]}
                   min={1}
-                  max={365}
+                  max={marketData.length}
                   step={1}
                   onValueChange={handleSliderChange}
                   className="py-3"
