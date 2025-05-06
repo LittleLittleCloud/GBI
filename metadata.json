@@ -15,7 +15,8 @@
         "IBM",
         "BABA",
         "MCHI",
-        "ASHR"
+        "ASHR",
+        "CL=F"
     ],
     "start_date": "2021-01-03",
     "interval": "1d"
