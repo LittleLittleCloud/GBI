@@ -43,12 +43,11 @@ def calculate_gbi(stock_symbol, start_date, end_date):
     """
     # Fetch stock data
     stock_data = yf.download(stock_symbol, start=start_date, end=end_date, auto_adjust=True)
-    if stock_data.empty:
-        raise ValueError(f"No data found for stock symbol: {stock_symbol}")
-    # Fetch gold data (using GLD ETF as a proxy for gold price)
     gold_data = yf.download("GLD", start=start_date, end=end_date, auto_adjust=True)
-    if gold_data.empty:
-        raise ValueError("No data found for gold (GLD).")
+
+    # if any of the data is empty, return an empty DataFrame
+    if stock_data.empty or gold_data.empty:
+        return pd.DataFrame(columns=["Date", "Stock Price", "Gold Price", "GBI"])
     
     # find the longest common date range
     common_start_date = max(stock_data.index.min(), gold_data.index.min())
