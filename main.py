@@ -66,9 +66,6 @@ def calculate_gbi(stock_symbol, start_date, end_date):
     # Calculate GBI
     merged_data["GBI"] = merged_data["Stock Price"] / merged_data["Gold Price"]
 
-    # Normalize the GBI columns on the first date
-    merged_data["GBI"] = merged_data["GBI"] / merged_data["GBI"].iloc[0]
-
     return merged_data
 
 # Example usage
